@@ -11,21 +11,8 @@
 	<groupId>com.eventpass</groupId>
 	<artifactId>eventpass</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>EventPass</name>
+	<description>Event ticketing REST API</description>
 	<properties>
 		<java.version>25</java.version>
 	</properties>

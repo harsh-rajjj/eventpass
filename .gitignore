@@ -35,7 +35,8 @@ build/
 ### Private learning files (not part of the public project) ###
 AGENTS.md
 notes/
-docs/           # plan + progress mention the course; the public story lives in README.md
+# plan + progress mention the course; the public story lives in README.md
+docs/
 
 ### Local runtime files ###
 .env
