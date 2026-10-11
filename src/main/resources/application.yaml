@@ -1,0 +1,12 @@
+
+spring:
+  application:
+    name: eventpass
+  jpa:
+    hibernate:
+      ddl-auto: validate        # Hibernate only CHECKS the schema; Flyway creates it
+    open-in-view: false         # no lazy loading in controllers; avoids hidden queries
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC        # store all timestamps in UTC

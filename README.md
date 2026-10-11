@@ -9,10 +9,6 @@
 - **Stateless Security:** JWT authentication with role-based access control (`ATTENDEE`, `ORGANIZER`, `ADMIN`).
 - **Production-Ready Standards:** RFC 9457 `ProblemDetail` error handling, Flyway database migrations, and OpenAPI 3 documentation.
 
-
-
-
-
 ## 🛠️ Tech Stack
 - **Runtime:** Java 25 (LTS), Spring Boot 4.1.1
 - **Security:** Spring Security 7, JJWT (Stateless Bearer Tokens)
@@ -31,4 +27,4 @@
 git clone https://github.com/harsh-rajjj/eventpass.git
 
 # Run via Maven Wrapper
-./mvnw spring-boot:run
+./mvnw spring-boot:run```

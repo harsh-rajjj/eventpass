@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: eventpass
+      MYSQL_USER: eventpass
+      MYSQL_PASSWORD: eventpass          # dev-only credentials
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"                      # host 3307 -> avoids clashing with a local MySQL on 3306
+    volumes:
+      - mysql-data:/var/lib/mysql        # named volume: data survives container restarts
+    healthcheck:                         # Spring Boot waits until the container is healthy
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  mysql-data:
