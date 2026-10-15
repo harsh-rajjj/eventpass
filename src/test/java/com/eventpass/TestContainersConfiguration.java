@@ -7,11 +7,11 @@ import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration(proxyBeanMethods = false)
-class TestContainersConfiguration {
+public class TestContainersConfiguration {
 
     @Bean
     @ServiceConnection   // Boot wires the datasource to this container automatically
-    MySQLContainer mysqlContainer() {
+    public MySQLContainer mysqlContainer() {
         return new MySQLContainer(DockerImageName.parse("mysql:8.4"));
     }
 }
