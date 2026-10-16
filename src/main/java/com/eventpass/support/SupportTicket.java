@@ -1,5 +1,6 @@
 package com.eventpass.support;
 
+import com.eventpass.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,42 +16,31 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "support_tickets")
-@Getter        
-@Setter                       
+@Getter
+@Setter
 @NoArgsConstructor
-public class SupportTicket {
+public class SupportTicket extends BaseEntity { // Inherits createdAt, createdBy, updatedAt, updatedBy
 
-     @Id 
-     @GeneratedValue(strategy = GenerationType.IDENTITY)
-     private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-     @Column(nullable = false, length = 100)
-     private String name;
+    @Column(nullable = false, length = 100)
+    private String name;
 
-     @Column(nullable = false)
-     private String email;
+    @Column(nullable = false)
+    private String email;
 
-     @Column(nullable = false, length = 200)
-     private String subject;
+    @Column(nullable = false, length = 200)
+    private String subject;
 
-     @Column(nullable = false, columnDefinition = "TEXT")
-     private String message;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String message;
 
-     @Enumerated(EnumType.STRING)  
-     @Column(nullable = false, length = 20)
-     private SupportTicketStatus status = SupportTicketStatus.NEW;  
-     
-     private Instant closedAt;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private SupportTicketStatus status = SupportTicketStatus.NEW;
 
-     @Column(name = "created_at", nullable = false, updatable = false)
-     private Instant createdAt;                   
-
-     @Column(name = "created_by", nullable = false)
-     private String createdBy;
-
-     @Column(name = "updated_at", nullable = false)
-     private Instant updatedAt;
-
-     @Column(name = "updated_by", nullable = false, length = 100)
-     private String updatedBy;
-}         
+    @Column(name = "closed_at")
+    private Instant closedAt;
+}
