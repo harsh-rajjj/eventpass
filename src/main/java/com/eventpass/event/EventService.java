@@ -1,10 +1,9 @@
 package com.eventpass.event;
 
 import java.util.List;
-
+import com.eventpass.common.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import lombok.RequiredArgsConstructor;
 
 @Service  
@@ -26,7 +25,7 @@ public class EventService {
     public EventDetailResponse findEventById(Long id) {
      Event event = eventRepository
                               .findById(id)
-                              .orElseThrow(() -> new RuntimeException("Event not found"));
+                              .orElseThrow(() -> new ResourceNotFoundException("Event", id));
 
           return EventMapper.toDetail(event);
     }

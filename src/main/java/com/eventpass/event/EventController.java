@@ -25,13 +25,7 @@ public class EventController {
 
      @GetMapping("/{id}")
      public ResponseEntity<EventDetailResponse> getEvent(@PathVariable Long id) {
-          try {
-               EventDetailResponse event = eventService.findEventById(id);
-               return ResponseEntity.ok(event);
-          }
-          catch (RuntimeException e) {
-               return ResponseEntity.notFound().build();
-          }
+        return ResponseEntity.ok(eventService.findEventById(id));
      }
      
 

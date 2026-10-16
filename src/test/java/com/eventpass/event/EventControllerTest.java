@@ -1,8 +1,10 @@
 package com.eventpass.event;
 
+import com.eventpass.common.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
@@ -102,11 +104,17 @@ class EventControllerTest {
     }
 
     @Test
-    void getEvent_returns404WhenNotFound() {
+    void getEvent_returns404ProblemDetailWhenNotFound() {
         when(eventService.findEventById(999L))
-                .thenThrow(new RuntimeException("Event not found"));
+                .thenThrow(new ResourceNotFoundException("Event", 999L));
 
         assertThat(mvc.get().uri("/api/v1/events/999"))
-                .hasStatus4xxClientError();    // 404
+                .hasStatus(HttpStatus.NOT_FOUND)
+                .bodyJson()
+                .satisfies(json -> {
+                    assertThat(json).extractingPath("$.title").isEqualTo("Resource Not Found");
+                    assertThat(json).extractingPath("$.status").isEqualTo(404);
+                    assertThat(json).extractingPath("$.detail").isEqualTo("Event with id 999 not found");
+                });
     }
 }
