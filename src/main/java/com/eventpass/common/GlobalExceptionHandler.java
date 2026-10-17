@@ -4,6 +4,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 @RestControllerAdvice 
 public class GlobalExceptionHandler 
@@ -21,6 +25,18 @@ public class GlobalExceptionHandler
           problem.setTitle("Internal Server Error");
           return problem;
 
+     }
+
+     @ExceptionHandler(MethodArgumentNotValidException.class)
+     public ProblemDetail handleValidationErrors(MethodArgumentNotValidException ex){
+          ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed for one or more fields");
+          problem.setTitle("Validation Error");
+          Map<String, String> errors = new LinkedHashMap<>();
+          for(FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+               errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+          }
+          problem.setProperty("errors", errors);
+          return problem;
      }
 
 }
