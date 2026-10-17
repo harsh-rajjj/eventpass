@@ -5,6 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Support Tickets", description = "Public endpoint for submitting support requests")
 @RestController 
 @RequestMapping("/api/v1/support-tickets")
 @RequiredArgsConstructor
