@@ -12,9 +12,10 @@ public class SupportTicketController {
      
      private final SupportTicketService supportTicketService;
 
+     @PostMapping
      public ResponseEntity<SupportTicketResponse> createTicket(@Valid @RequestBody CreateSupportTicketRequest request) {
           SupportTicketResponse response = supportTicketService.createTicket(request);
-          URI location = URI.create("/api/v1/support-tickets" + response.id());
+          URI location = URI.create("/api/v1/support-tickets/" + response.id());
           return ResponseEntity.created(location).body(response);
 
      } 
