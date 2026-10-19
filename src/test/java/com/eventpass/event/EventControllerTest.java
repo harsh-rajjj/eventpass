@@ -1,6 +1,8 @@
 package com.eventpass.event;
 
 import com.eventpass.common.ResourceNotFoundException;
+import com.eventpass.security.JwtAuthenticationFilter;
+import com.eventpass.security.JwtService;
 import com.eventpass.security.SecurityConfig;
 
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.when;
 // No real service, no DB — we mock the service with @MockitoBean.
 // MockMvcTester is Spring Boot 4's fluent API for testing HTTP calls.
 @WebMvcTest(EventController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtService.class})
 class EventControllerTest {
 
     @Autowired
