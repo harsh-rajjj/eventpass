@@ -5,6 +5,9 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.password.CompromisedPasswordException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -13,6 +16,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+@Slf4j 
 @RestControllerAdvice 
 public class GlobalExceptionHandler 
 {
@@ -64,4 +68,12 @@ public class GlobalExceptionHandler
           return problem;
      }
 
+     // @ExceptionHandler(Exception.class)
+     // public ProblemDetail handleGenericException(Exception ex) {
+     //      log.error("Unhandled exception occurred", ex);
+
+     //      ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+     //      problem.setTitle("Internal Server Error");
+     //      return problem;
+     // }
 }
