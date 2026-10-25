@@ -48,14 +48,6 @@ public class GlobalExceptionHandler
           return problem;
      }
 
-     @ExceptionHandler(Exception.class)
-     public ProblemDetail handleGenericException(Exception ex) {
-          ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occured");
-          problem.setTitle("Internal Server Error");
-          return problem;
-
-     }
-
      @ExceptionHandler(MethodArgumentNotValidException.class)
      public ProblemDetail handleValidationErrors(MethodArgumentNotValidException ex){
           ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed for one or more fields");
@@ -68,12 +60,12 @@ public class GlobalExceptionHandler
           return problem;
      }
 
-     // @ExceptionHandler(Exception.class)
-     // public ProblemDetail handleGenericException(Exception ex) {
-     //      log.error("Unhandled exception occurred", ex);
+     @ExceptionHandler(Exception.class)
+     public ProblemDetail handleGenericException(Exception ex) {
+          log.error("Unhandled exception occurred", ex);
 
-     //      ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
-     //      problem.setTitle("Internal Server Error");
-     //      return problem;
-     // }
+          ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+          problem.setTitle("Internal Server Error");
+          return problem;
+     }
 }

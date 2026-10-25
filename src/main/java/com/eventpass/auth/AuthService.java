@@ -44,6 +44,7 @@ public class AuthService {
         user.setRole(Role.ATTENDEE);
 
         User saved = userRepository.save(user);
+        log.info("Registered attendee id={} email={}", saved.getId(), saved.getEmail());
         return UserResponse.from(saved);
     }
 
@@ -69,6 +70,7 @@ public class AuthService {
         user.setOrganizer(savedOrganizer);
 
         User savedUser = userRepository.save(user);
+        log.info("Registered organizer user id={} organizerId={}", savedUser.getId(), savedOrganizer.getId());
         return UserResponse.from(savedUser);
     }
 
@@ -85,18 +87,21 @@ public class AuthService {
         User user = userRepository.findByEmail(email).orElseThrow();
         String token = jwtService.generateToken(user.getEmail(), user.getRole());
 
+        log.info("User logged in email={} role={}", user.getEmail(), user.getRole());
         return new AuthResponse(token);
     }
 
     private void validateNewUser(String email, String rawPassword) {
         // Reject duplicate email with 409 Conflict
         if (userRepository.existsByEmail(email)) {
+            log.warn("Registration rejected: duplicate email={}", email);
             throw new DuplicateEmailException(email);
         }
 
         // Reject breached passwords with 400 Bad Request
         CompromisedPasswordDecision decision = compromisedPasswordChecker.check(rawPassword);
         if (decision.isCompromised()) {
+            log.warn("Registration rejected: compromised password for email={}", email);
             throw new CompromisedPasswordException(
                     "The provided password has appeared in a data breach and cannot be used");
         }

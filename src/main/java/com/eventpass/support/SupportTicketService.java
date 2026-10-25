@@ -22,6 +22,7 @@ public class SupportTicketService {
           ticket.setMessage(request.message());
 
           SupportTicket saved = supportTicketRepository.save(ticket);
+          log.info("Created support ticket id={} status={}", saved.getId(), saved.getStatus());
           return SupportTicketResponse.from(saved);
      }
 }
