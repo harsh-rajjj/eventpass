@@ -1,6 +1,7 @@
 package com.eventpass.auth;
 
 import com.eventpass.common.DuplicateEmailException;
+import com.eventpass.logging.Audited;
 import com.eventpass.organizer.Organizer;
 import com.eventpass.organizer.OrganizerRepository;
 import com.eventpass.security.JwtService;
@@ -32,6 +33,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
+    @Audited(action = "REGISTER_ATTENDEE")
     @Transactional
     public UserResponse registerAttendee(RegisterAttendeeRequest request) {
         String email = normalizeEmail(request.email());
@@ -48,6 +50,7 @@ public class AuthService {
         return UserResponse.from(saved);
     }
 
+    @Audited(action = "REGISTER_ORGANIZER")
     @Transactional // Saves both Organizer and User in ONE database transaction
     public UserResponse registerOrganizer(RegisterOrganizerRequest request) {
         String email = normalizeEmail(request.email());

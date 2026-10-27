@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.eventpass.logging.Audited;
 
 @Slf4j
 @Service 
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SupportTicketService {
      private final SupportTicketRepository supportTicketRepository;
 
+     @Audited(action = "CREATE_SUPPORT_TICKET")
      @Transactional
      public SupportTicketResponse createTicket(CreateSupportTicketRequest request) {
           SupportTicket ticket = new SupportTicket();
