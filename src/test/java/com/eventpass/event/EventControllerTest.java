@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 // @WebMvcTest loads ONLY the web layer for EventController.
@@ -41,7 +42,8 @@ class EventControllerTest {
                 "Mumbai", Instant.parse("2027-06-01T10:00:00Z"),
                 "Test Org"
         );
-        when(eventService.findPublishedEvents()).thenReturn(List.of(summary));
+        when(eventService.searchPublishedEvents(null, null, null, null, null))
+                .thenReturn(List.of(summary));
 
         // Act + Assert
         assertThat(mvc.get().uri("/api/v1/events"))
@@ -58,13 +60,42 @@ class EventControllerTest {
                 "Mumbai", Instant.parse("2027-06-01T10:00:00Z"),
                 "Test Org"
         );
-        when(eventService.findPublishedEvents()).thenReturn(List.of(summary));
+        when(eventService.searchPublishedEvents(null, null, null, null, null))
+                .thenReturn(List.of(summary));
 
         assertThat(mvc.get().uri("/api/v1/events"))
                 .hasStatusOk()
                 .bodyJson()
                 .extractingPath("$[0].organizerName")
                 .isEqualTo("Test Org");
+    }
+
+    @Test
+    void getPublishedEvents_withQueryParams_passesFiltersToService() {
+        Instant from = Instant.parse("2027-05-01T00:00:00Z");
+        Instant to = Instant.parse("2027-07-01T00:00:00Z");
+        var summary = new EventSummary(
+                1L, "Spring Boot Summit", EventCategory.TECH,
+                "Mumbai", Instant.parse("2027-06-01T10:00:00Z"),
+                "Test Org"
+        );
+
+        when(eventService.searchPublishedEvents("Mumbai", EventCategory.TECH, from, to, "Spring"))
+                .thenReturn(List.of(summary));
+
+        assertThat(mvc.get()
+                .uri("/api/v1/events")
+                .param("city", "Mumbai")
+                .param("category", "TECH")
+                .param("from", "2027-05-01T00:00:00Z")
+                .param("to", "2027-07-01T00:00:00Z")
+                .param("q", "Spring"))
+                .hasStatusOk()
+                .bodyJson()
+                .extractingPath("$[0].title")
+                .isEqualTo("Spring Boot Summit");
+
+        verify(eventService).searchPublishedEvents("Mumbai", EventCategory.TECH, from, to, "Spring");
     }
 
     @Test
