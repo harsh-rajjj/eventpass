@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.password.CompromisedPasswordChecker;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 
 @Configuration 
+@EnableMethodSecurity  // So @PreAuthorize works when needed
 @EnableWebSecurity  // 👈 This annotation enables Spring Security’s web security features
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -33,11 +35,19 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                                 .accessDeniedHandler(new RestAccessDeniedHandler()))
+                                 .authorizeHttpRequests(auth -> auth
                                    .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
                                    .requestMatchers(HttpMethod.POST, "/api/v1/support-tickets").permitAll()
                                    .requestMatchers("/api/v1/auth/**").permitAll()
                                    .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+
+                                   //Role-protected endpoints
+                                   .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                   .requestMatchers("/api/v1/organizer/**").hasRole("ORGANIZER")
+                                   .requestMatchers("/api/v1/me/**", "/api/v1/bookings/**").hasRole("ATTENDEE")
+     
                                    .anyRequest().authenticated()
                                    )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
