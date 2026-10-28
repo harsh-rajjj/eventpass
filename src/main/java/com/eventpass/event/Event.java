@@ -1,5 +1,5 @@
 package com.eventpass.event;
-
+import jakarta.persistence.NamedQuery;
 import com.eventpass.organizer.Organizer;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -21,8 +21,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 @Entity
 @Table(name = "events")
+@NamedQuery(name = "Event.findByOrganizerIdOrderByStartsAtAsc",
+            query = "SELECT e FROM Event e  JOIN FETCH e.organizer WHERE e.organizer.id = :organizerId ORDER BY e.startsAt ASC"
+)
 @Getter @Setter @NoArgsConstructor
 public class Event {
 

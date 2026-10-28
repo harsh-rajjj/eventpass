@@ -8,5 +8,6 @@ spring:
     open-in-view: false         # no lazy loading in controllers; avoids hidden queries
     properties:
       hibernate:
+        default_batch_fetch_size: 20 # Batches lazy loads with WHERE id IN (...)
         jdbc:
           time_zone: UTC        # store all timestamps in UTC
