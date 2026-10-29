@@ -34,6 +34,13 @@ public class GlobalExceptionHandler
           return problem;
      }
 
+     @ExceptionHandler(BusinessRuleException.class)
+     public ProblemDetail handleBusinessRule(BusinessRuleException ex) {
+          ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+          problem.setTitle("Business Rule Violation");
+          return problem;
+     }
+
      @ExceptionHandler(CompromisedPasswordException.class)
      public ProblemDetail handleCompromisedPassword(CompromisedPasswordException ex) {
           ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());

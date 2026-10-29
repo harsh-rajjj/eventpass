@@ -9,9 +9,22 @@ public record SupportTicketResponse(
      String subject,
      String message,
      SupportTicketStatus status,
-     Instant createdAt
+     Instant createdAt,
+     Instant closedAt
      
 ) {
+     public SupportTicketResponse(
+          Long id,
+          String name,
+          String email,
+          String subject,
+          String message,
+          SupportTicketStatus status,
+          Instant createdAt
+     ) {
+          this(id, name, email, subject, message, status, createdAt, null);
+     }
+
      public static SupportTicketResponse from(SupportTicket ticket) {
           return new SupportTicketResponse(  
                ticket.getId(),
@@ -20,7 +33,8 @@ public record SupportTicketResponse(
                ticket.getSubject(),
                ticket.getMessage(),
                ticket.getStatus(),
-               ticket.getCreatedAt()
+               ticket.getCreatedAt(),
+               ticket.getClosedAt()
           );
      }
 
