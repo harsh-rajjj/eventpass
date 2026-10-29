@@ -1,12 +1,13 @@
 package com.eventpass.event;
-
+import com.eventpass.common.PageResponse;
 import com.eventpass.common.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
-import java.util.List;
 
 @Slf4j 
 @Service  
@@ -20,33 +21,28 @@ public class EventService {
      * filters in a single JOIN FETCH
      * query (no N+1).
      */
-    public List<EventSummary> searchPublishedEvents(
+    public PageResponse<EventSummary> searchPublishedEvents(
         String city,
         EventCategory category,
         Instant from,
         Instant to,
-        String q
+        String q,
+        Pageable pageable
     ){
         String normalizedCity = normalizeFilter(city);
         String normalizedQuery = normalizeFilter(q);
 
         log.debug("Searching published events city={} category={} from={} to={} q={}",
-            normalizedCity, category, from, to, normalizedQuery
+            normalizedCity, category, from, to, normalizedQuery, pageable
         );
     
-            return eventRepository
-                                .searchPublishedEvents(normalizedCity, category, from, to, normalizedQuery)
-                                .stream()
-                                .map(EventMapper::toSummary)
-                                .toList();
-    }
+        Page<Event> eventPage = eventRepository.searchPublishedEvents(
+            normalizedCity, category, from, to, normalizedQuery, pageable);
+        
+            return PageResponse.from(eventPage, EventMapper::toSummary);
+        }
 
-    /*
-    Convenience overload when no filters are supplied
-    */
-    public List<EventSummary> findPublishedEvents() {
-     return searchPublishedEvents(null, null, null, null, null);
-    }
+    
 
     /**
      * Loads a single event along with its Organizer and TicketTiers in ONE query via @EntityGraph

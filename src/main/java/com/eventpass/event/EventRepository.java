@@ -1,10 +1,13 @@
 package com.eventpass.event;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -16,26 +19,59 @@ public interface EventRepository extends JpaRepository<Event, Long> {
      *    - JOIN FETCH e.organizer loads Event + Organizer in ONE query (eliminates N+1).
      *    - (:param IS NULL OR ...) makes every filter optional.
      */
-    @Query("""
-            SELECT e FROM Event e
-            JOIN FETCH e.organizer o
-            WHERE e.status = com.eventpass.event.EventStatus.PUBLISHED
-              AND (:city IS NULL OR LOWER(e.city) = LOWER(:city))
-              AND (:category IS NULL OR e.category = :category)
-              AND (:fromDate IS NULL OR e.startsAt >= :fromDate)
-              AND (:toDate IS NULL OR e.startsAt <= :toDate)
-              AND (:q IS NULL
-                   OR LOWER(e.title) LIKE LOWER(CONCAT('%', :q, '%'))
-                   OR LOWER(e.description) LIKE LOWER(CONCAT('%', :q, '%')))
-            ORDER BY e.startsAt ASC
-            """)
-    List<Event> searchPublishedEvents(
+     @Query(
+            value = """
+                    SELECT e FROM Event e
+                    JOIN FETCH e.organizer o
+                    WHERE e.status = com.eventpass.event.EventStatus.PUBLISHED
+                      AND (:city IS NULL OR LOWER(e.city) = LOWER(:city))
+                      AND (:category IS NULL OR e.category = :category)
+                      AND (:fromDate IS NULL OR e.startsAt >= :fromDate)
+                      AND (:toDate IS NULL OR e.startsAt <= :toDate)
+                      AND (:q IS NULL
+                           OR LOWER(e.title) LIKE LOWER(CONCAT('%', :q, '%'))
+                           OR LOWER(e.description) LIKE LOWER(CONCAT('%', :q, '%')))
+                    """,
+            countQuery = """
+                    SELECT COUNT(e) FROM Event e
+                    WHERE e.status = com.eventpass.event.EventStatus.PUBLISHED
+                      AND (:city IS NULL OR LOWER(e.city) = LOWER(:city))
+                      AND (:category IS NULL OR e.category = :category)
+                      AND (:fromDate IS NULL OR e.startsAt >= :fromDate)
+                      AND (:toDate IS NULL OR e.startsAt <= :toDate)
+                      AND (:q IS NULL
+                           OR LOWER(e.title) LIKE LOWER(CONCAT('%', :q, '%'))
+                           OR LOWER(e.description) LIKE LOWER(CONCAT('%', :q, '%')))
+                    """
+    )
+    Page<Event> searchPublishedEvents(
             @Param("city") String city,
             @Param("category") EventCategory category,
             @Param("fromDate") Instant fromDate,
             @Param("toDate") Instant toDate,
-            @Param("q") String q
+            @Param("q") String q,
+            Pageable pageable
     );
+
+    /*
+    Convenience overload with default page (0..100) sorted by startsAt ASC
+    */
+    default List<Event> searchPublishedEvents(
+        String city,
+        EventCategory category,
+        Instant fromDate,
+        Instant toDate,
+        String q
+    ) {
+        return searchPublishedEvents(
+                city,
+                category,
+                fromDate,
+                toDate,
+                q,
+                PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "startsAt"))
+        ).getContent();
+    }
 
     /**
      * 2. @EntityGraph: Eagerly fetches Organizer and TicketTiers in a single SQL LEFT JOIN
