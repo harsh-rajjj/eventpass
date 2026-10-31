@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.Instant;
@@ -93,4 +94,19 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             nativeQuery = true
     )
     long countPublishedEventsByOrganizerId(@Param("organizerId") Long organizerId);
+
+    /**
+     * 5. Bulk @Modifying update : Atomically transitions all PUBLISHED events
+     *    for a given organizer to the target status (e.g., DRAFT when suspended).
+     */
+
+    
+@Modifying(clearAutomatically = true, flushAutomatically = true)
+@Query("""
+                UPDATE Event e SET e.status = :newStatus WHERE e.organizer.id = :organizerId AND e.status = com.eventpass.event.EventStatus.PUBLISHED
+                """)
+int updatePublishedEventsStatusByOrganizerId(
+        @Param("organizerId") Long organizerId, 
+        @Param("newStatus") EventStatus newStatus
+);
 }
