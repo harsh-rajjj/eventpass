@@ -1,5 +1,6 @@
 package com.eventpass.organizer;
-
+import com.eventpass.common.CacheConfig;  
+import org.springframework.cache.annotation.CacheEvict;  
 import com.eventpass.common.BusinessRuleException;
 import com.eventpass.common.PageResponse;
 import com.eventpass.common.ResourceNotFoundException;
@@ -50,8 +51,11 @@ public class AdminOrganizerService {
     /**
      * Suspending an organizer unpublishes ALL their published events in ONE transaction.
      * If anything fails, both the organizer update and the events update are rolled back.
+     * 
+     * Evicts the eventDetails cache so unpublished events are not served from RAM.
      */
     @Audited(action = "SUSPEND_ORGANIZER")
+    @CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, allEntries = true)
     @Transactional
     public SuspendOrganizerResponse suspend(Long organizerId) {
         Organizer organizer = findOrganizer(organizerId);

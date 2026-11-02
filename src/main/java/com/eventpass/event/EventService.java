@@ -3,6 +3,8 @@ import com.eventpass.common.PageResponse;
 import com.eventpass.common.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import com.eventpass.common.CacheConfig;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,10 @@ public class EventService {
 
     /**
      * Loads a single event along with its Organizer and TicketTiers in ONE query via @EntityGraph
-     */
+     * Cached in Caffeine under "eventDetails" by event id.
+    */
+
+    @Cacheable(cacheNames = CacheConfig.EVENT_DETAILS_CACHE,  key = "#id")
     public EventDetailResponse findEventById(Long id) {
      Event event = eventRepository
                               .findWithDetailsById(id)
