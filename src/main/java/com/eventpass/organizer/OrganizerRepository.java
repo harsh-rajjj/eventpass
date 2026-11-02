@@ -11,4 +11,6 @@ public interface OrganizerRepository extends JpaRepository<Organizer, Long> {
                SELECT o FROM Organizer o WHERE (:status IS NULL OR o.status = :status)
                """)
      Page<Organizer> findAllByStatusOptional(@Param("status") OrganizerStatus status, Pageable pageable);
+
+     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 }
