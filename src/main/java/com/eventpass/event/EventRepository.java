@@ -109,4 +109,12 @@ int updatePublishedEventsStatusByOrganizerId(
         @Param("organizerId") Long organizerId, 
         @Param("newStatus") EventStatus newStatus
 );
+
+// 6. Paged list of an organizer's own events (any status: DRAFT, PUBLISHED, CANCELLED)
+@EntityGraph(attributePaths = "organizer")
+Page<Event> findByOrganizerId(Long organizerId, Pageable pageable);
+
+// 7. Ownership lookup: loads Event + Organizer + TicketTiers ONLY if owned by organizerId
+@EntityGraph(attributePaths = {"organizer", "ticketTiers"})
+Optional<Event> findByIdAndOrganizerId(Long id, Long organizerId);
 }
