@@ -1,5 +1,6 @@
 package com.eventpass.event;
 
+import com.eventpass.booking.BookingRepository;
 import com.eventpass.common.CacheConfig;
 import com.eventpass.organizer.AdminOrganizerService;
 import com.eventpass.organizer.Organizer;
@@ -54,6 +55,9 @@ class EventCachingTest {
 
     @MockitoBean
     private OrganizerService organizerService;
+
+    @MockitoBean
+    private BookingRepository bookingRepository;
 
     @BeforeEach
     void clearCache() {

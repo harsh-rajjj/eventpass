@@ -16,6 +16,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.eventpass.booking.BookingRepository;
+import java.time.Instant;
+
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class OrganizerEventService {
     private final EventRepository eventRepository;
     private final TicketTierRepository ticketTierRepository;
     private final OrganizerService organizerService;
+    private final BookingRepository bookingRepository;
 
     public PageResponse<EventSummary> listMyEvents(String userEmail, Pageable pageable) {
         Organizer organizer = organizerService.getOrganizerForUser(userEmail);
@@ -101,20 +106,24 @@ public class OrganizerEventService {
     }
 
     @Audited(action = "CANCEL_EVENT")
-    @CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, key = "#eventId")
-    @Transactional
-    public EventDetailResponse cancelEvent(String userEmail, Long eventId) {
-        Event event = getOwnedEvent(userEmail, eventId);
+@CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, key = "#eventId")
+@Transactional
+public EventDetailResponse cancelEvent(String userEmail, Long eventId) {
+    Event event = getOwnedEvent(userEmail, eventId);
 
-        if (event.getStatus() == EventStatus.CANCELLED) {
-            throw new BusinessRuleException("Event with id " + eventId + " is already CANCELLED");
-        }
-
-        // TEMP: cancelling active bookings when an event is cancelled will be added in S17 (BR8)
-        event.setStatus(EventStatus.CANCELLED);
-        log.info("Cancelled event id={} organizerId={}", event.getId(), event.getOrganizer().getId());
-        return EventMapper.toDetail(event);
+    if (event.getStatus() == EventStatus.CANCELLED) {
+        throw new BusinessRuleException("Event with id " + eventId + " is already CANCELLED");
     }
+
+    event.setStatus(EventStatus.CANCELLED);
+    Long organizerId = event.getOrganizer().getId();
+    EventDetailResponse response = EventMapper.toDetail(event);
+
+    int cancelledBookings = bookingRepository.cancelConfirmedBookingsByEventId(eventId, Instant.now());
+    log.info("Cancelled event id={} organizerId={} cancelledBookings={}",
+            eventId, organizerId, cancelledBookings);
+    return response;
+}
 
     @Audited(action = "ADD_TICKET_TIER")
     @CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, key = "#eventId")

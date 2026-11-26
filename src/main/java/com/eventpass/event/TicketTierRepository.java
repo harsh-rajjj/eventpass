@@ -1,13 +1,17 @@
 package com.eventpass.event;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.Optional;
 
 public interface TicketTierRepository extends JpaRepository<TicketTier, Long> {
 
 
+     @EntityGraph(attributePaths = "event")
+     Optional<TicketTier> findWithEventById(Long id);
 
      /**
      * Atomic conditional update to prevent overselling under concurrent requests.
