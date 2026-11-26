@@ -41,6 +41,13 @@ public class GlobalExceptionHandler
           return problem;
      }
 
+     @ExceptionHandler(SoldOutException.class)
+     public ProblemDetail handleSoldOut(SoldOutException ex) {
+          ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+          problem.setTitle("Sold Out");
+          return problem;
+     }
+
      @ExceptionHandler(CompromisedPasswordException.class)
      public ProblemDetail handleCompromisedPassword(CompromisedPasswordException ex) {
           ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
