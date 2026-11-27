@@ -1,0 +1,10 @@
+spring:
+  docker:
+    compose:
+      enabled: false
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
+
+app:
+  jwt:
+    secret: test-only-jwt-signing-key-minimum-32-chars

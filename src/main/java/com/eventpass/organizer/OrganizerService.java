@@ -57,6 +57,6 @@ public class OrganizerService {
         if (organizer == null) {
             throw new BusinessRuleException("User " + userEmail + " is not linked to an organization");
         }
-        return organizer;
+        return organizer;     
     }
 }

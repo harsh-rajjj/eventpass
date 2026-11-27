@@ -4,6 +4,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.password.CompromisedPasswordChecker;
@@ -19,7 +20,8 @@ import org.springframework.security.web.authentication.password.HaveIBeenPwnedRe
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 
-@Configuration 
+@Configuration
+@EnableConfigurationProperties(JwtProperties.class)
 @EnableMethodSecurity  // So @PreAuthorize works when needed
 @EnableWebSecurity  // 👈 This annotation enables Spring Security’s web security features
 @RequiredArgsConstructor

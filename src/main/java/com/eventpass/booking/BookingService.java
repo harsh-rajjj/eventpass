@@ -16,6 +16,7 @@ import com.eventpass.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
@@ -30,12 +31,12 @@ import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
+@EnableConfigurationProperties(BookingProperties.class)
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BookingService {
 
-    static final int MAX_TICKETS_PER_EVENT = 6;
-    static final long CANCEL_CUTOFF_HOURS = 24;
+    private final BookingProperties bookingProperties;
 
     private static final String REF_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     private static final int REF_RANDOM_LENGTH = 6;
@@ -69,10 +70,11 @@ public class BookingService {
             throw new BusinessRuleException("Cannot book tickets for an event that has already started");
         }
 
+        int maxTickets = bookingProperties.maxTicketsPerEvent();
         int alreadyBooked = bookingRepository.sumActiveTicketsForUserAndEvent(user.getId(), event.getId());
-        if (alreadyBooked + request.quantity() > MAX_TICKETS_PER_EVENT) {
+        if (alreadyBooked + request.quantity() > maxTickets) {
             throw new BusinessRuleException(
-                    "Maximum " + MAX_TICKETS_PER_EVENT + " tickets allowed per event (already booked: " + alreadyBooked + ")"
+                    "Maximum " + maxTickets + " tickets allowed per event (already booked: " + alreadyBooked + ")"
             );
         }
 
@@ -151,10 +153,11 @@ public class BookingService {
             throw new BusinessRuleException("Checked-in bookings cannot be cancelled");
         }
 
-        Instant cancellationDeadline = booking.getEvent().getStartsAt().minus(CANCEL_CUTOFF_HOURS, ChronoUnit.HOURS);
+        long cutoffHours = bookingProperties.cancelCutoffHours();
+        Instant cancellationDeadline = booking.getEvent().getStartsAt().minus(cutoffHours, ChronoUnit.HOURS);
         if (!Instant.now().isBefore(cancellationDeadline)) {
             throw new BusinessRuleException(
-                    "Bookings can only be cancelled at least " + CANCEL_CUTOFF_HOURS + " hours before event start"
+                    "Bookings can only be cancelled at least " + cutoffHours + " hours before event start"
             );
         }
 

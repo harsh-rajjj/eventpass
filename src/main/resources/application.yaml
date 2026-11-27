@@ -1,13 +1,26 @@
-
 spring:
   application:
     name: eventpass
+  profiles:
+    default: dev
+  flyway:
+    locations: classpath:db/migration
   jpa:
     hibernate:
-      ddl-auto: validate        # Hibernate only CHECKS the schema; Flyway creates it
-    open-in-view: false         # no lazy loading in controllers; avoids hidden queries
+      ddl-auto: validate
+    open-in-view: false
     properties:
       hibernate:
-        default_batch_fetch_size: 20 # Batches lazy loads with WHERE id IN (...)
+        default_batch_fetch_size: 20
         jdbc:
-          time_zone: UTC        # store all timestamps in UTC
+          time_zone: UTC
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:PT1H}
+  booking:
+    max-tickets-per-event: ${APP_BOOKING_MAX_TICKETS_PER_EVENT:6}
+    cancel-cutoff-hours: ${APP_BOOKING_CANCEL_CUTOFF_HOURS:24}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}

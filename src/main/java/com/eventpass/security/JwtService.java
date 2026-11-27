@@ -1,27 +1,35 @@
 package com.eventpass.security;
+
 import com.eventpass.user.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
 
 @Service
 public class JwtService {
 
-     private final SecretKey signingKey = Keys.hmacShaKeyFor(SecurityConstants.JWT_SECRET.getBytes(StandardCharsets.UTF_8));
+     private final SecretKey signingKey;
+     private final JwtProperties jwtProperties;
+
+     public JwtService(JwtProperties jwtProperties) {
+          this.jwtProperties = jwtProperties;
+          this.signingKey = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+     }
 
      public String generateToken(String email, Role role) {
-          Date now = new Date();
-          Date expiry = new Date(now.getTime() + SecurityConstants.JWT_EXPIRATION_MS);
+          Instant now = Instant.now();
+          Instant expiry = now.plus(jwtProperties.expiration());
 
           return Jwts.builder()
                     .subject(email)
                     .claim("role", role.name())
-                    .issuedAt(now)
-                    .expiration(expiry)
+                    .issuedAt(Date.from(now))
+                    .expiration(Date.from(expiry))
                     .signWith(signingKey)
                     .compact();
      }
