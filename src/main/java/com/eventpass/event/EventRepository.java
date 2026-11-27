@@ -15,8 +15,6 @@ import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-
-        boolean existsByIdAndOrganizerId(Long id, Long organizerId);
     /**
      * 1. JPQL + JOIN FETCH with optional search filters.
      *    - JOIN FETCH e.organizer loads Event + Organizer in ONE query (eliminates N+1).
@@ -122,4 +120,8 @@ Page<Event> findByOrganizerId(Long organizerId, Pageable pageable);
 // 7. Ownership lookup: loads Event + Organizer + TicketTiers ONLY if owned by organizerId
 @EntityGraph(attributePaths = {"organizer", "ticketTiers"})
 Optional<Event> findByIdAndOrganizerId(Long id, Long organizerId);
+
+ boolean existsByIdAndOrganizerId(Long id, Long organizerId);
+
 }
+
