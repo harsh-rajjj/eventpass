@@ -1,0 +1,414 @@
+{
+  "info": {
+    "name": "EventPass REST API",
+    "description": "End-to-end Postman collection for EventPass (Spring Boot 4 / Java 25 event ticketing API). Login requests automatically store the returned JWT in the collection variable {{token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "eventId", "value": "1" },
+    { "key": "tierId", "value": "1" },
+    { "key": "bookingRef", "value": "" },
+    { "key": "organizerId", "value": "5" },
+    { "key": "ticketId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register Attendee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Priya Nair\",\n  \"email\": \"priya@example.com\",\n  \"password\": \"EventPass!Strong2026\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "Register Organizer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Rohan Verma\",\n  \"email\": \"rohan@pulseevents.example.com\",\n  \"password\": \"EventPass!Strong2026\",\n  \"organizerName\": \"Pulse Events\",\n  \"description\": \"Live concerts and indie showcases\",\n  \"website\": \"https://pulseevents.example.com\",\n  \"contactEmail\": \"hello@pulseevents.example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register/organizer"
+          }
+        },
+        {
+          "name": "Login (Dev Attendee — saves {{token}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"attendee@eventpass.dev\",\n  \"password\": \"EventPass!Dev2026\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Login (Dev Organizer — saves {{token}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"organizer@eventpass.dev\",\n  \"password\": \"EventPass!Dev2026\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Login (Dev Admin — saves {{token}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventpass.dev\",\n  \"password\": \"EventPass!Dev2026\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Public Events & Support",
+      "item": [
+        {
+          "name": "Search Published Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/events?city=Goa&category=MUSIC&page=0&size=10&sort=startsAt,asc"
+          }
+        },
+        {
+          "name": "Get Published Event Details (Cached)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}"
+          }
+        },
+        {
+          "name": "Submit Support Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('ticketId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aarav Sharma\",\n  \"email\": \"aarav@example.com\",\n  \"subject\": \"Question about VIP gates\",\n  \"message\": \"What time do VIP gates open for Neon Sunburn 2027?\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/support-tickets"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Attendee Bookings",
+      "item": [
+        {
+          "name": "Create Booking (saves {{bookingRef}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('bookingRef', pm.response.json().bookingRef);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketTierId\": 1,\n  \"quantity\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/bookings"
+          }
+        },
+        {
+          "name": "List My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/me/bookings?page=0&size=10"
+          }
+        },
+        {
+          "name": "Get My Booking by Ref",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookingRef}}"
+          }
+        },
+        {
+          "name": "Cancel Booking (24h Cutoff)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookingRef}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Organizer Management & Check-In",
+      "item": [
+        {
+          "name": "Get My Organization Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/organizer/profile"
+          }
+        },
+        {
+          "name": "Update My Organization Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Neon Festivals\",\n  \"description\": \"Premier music and arts festivals across India\",\n  \"website\": \"https://neonfest.example.com\",\n  \"contactEmail\": \"contact@neonfest.example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/organizer/profile"
+          }
+        },
+        {
+          "name": "List My Events",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/organizer/events?page=0&size=10"
+          }
+        },
+        {
+          "name": "Create Draft Event (saves {{eventId}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('eventId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spring Boot Summit 2027\",\n  \"description\": \"Deep-dive Java 25 and distributed systems conference\",\n  \"category\": \"TECH\",\n  \"venueName\": \"BKC Convention Hall\",\n  \"city\": \"Mumbai\",\n  \"address\": \"Bandra Kurla Complex, Mumbai\",\n  \"startsAt\": \"2027-09-15T09:00:00Z\",\n  \"endsAt\": \"2027-09-15T18:00:00Z\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/organizer/events"
+          }
+        },
+        {
+          "name": "Add Ticket Tier (saves {{tierId}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('tierId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Early Bird\",\n  \"price\": 1999.00,\n  \"capacity\": 100\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/organizer/events/{{eventId}}/tiers"
+          }
+        },
+        {
+          "name": "Publish Event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/organizer/events/{{eventId}}/publish"
+          }
+        },
+        {
+          "name": "List Event Attendees / Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/organizer/events/{{eventId}}/bookings?page=0&size=20"
+          }
+        },
+        {
+          "name": "Check In Attendee Booking (Single-Use)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/organizer/bookings/{{bookingRef}}/check-in"
+          }
+        },
+        {
+          "name": "Cancel Event (Cascades to Bookings)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/organizer/events/{{eventId}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Admin",
+      "item": [
+        {
+          "name": "List Pending Organizers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/organizers?status=PENDING&page=0&size=10"
+          }
+        },
+        {
+          "name": "Approve Organizer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/organizers/{{organizerId}}/approve"
+          }
+        },
+        {
+          "name": "Suspend Organizer (Atomic Unpublish)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/organizers/{{organizerId}}/suspend"
+          }
+        },
+        {
+          "name": "List Open Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/support-tickets?status=NEW&page=0&size=10"
+          }
+        },
+        {
+          "name": "Close Support Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CLOSED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/admin/support-tickets/{{ticketId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
