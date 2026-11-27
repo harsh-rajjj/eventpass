@@ -81,6 +81,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @EntityGraph(attributePaths = {"organizer", "ticketTiers"})
     Optional<Event> findWithDetailsById(Long id);
 
+    @EntityGraph(attributePaths = {"organizer", "ticketTiers"})
+    Optional<Event> findWithDetailsByIdAndStatus(Long id, EventStatus status);
+
     /**
      * 3. Bound to @NamedQuery(name = "Event.findByOrganizerIdOrderByStartsAtAsc") on Event entity.
      */

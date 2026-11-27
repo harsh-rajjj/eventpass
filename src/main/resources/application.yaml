@@ -5,6 +5,11 @@ spring:
     default: dev
   flyway:
     locations: classpath:db/migration
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 50
   jpa:
     hibernate:
       ddl-auto: validate

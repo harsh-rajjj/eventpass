@@ -68,7 +68,7 @@ class EventCachingTest {
     void findEventById_cachesResultOnFirstCall_andSkipsRepositoryOnSecondCall() {
         Organizer org = sampleOrganizer(10L, "Neon Festivals", OrganizerStatus.APPROVED);
         Event event = sampleEvent(1L, "Neon Sunburn 2027", org);
-        when(eventRepository.findWithDetailsById(1L)).thenReturn(Optional.of(event));
+        when(eventRepository.findWithDetailsByIdAndStatus(1L, EventStatus.PUBLISHED)).thenReturn(Optional.of(event));
 
         // 1st call -> cache miss -> hits repository
         EventDetailResponse first = eventService.findEventById(1L);
@@ -77,7 +77,7 @@ class EventCachingTest {
 
         assertThat(first.title()).isEqualTo("Neon Sunburn 2027");
         assertThat(second).isEqualTo(first);
-        verify(eventRepository, times(1)).findWithDetailsById(1L);
+        verify(eventRepository, times(1)).findWithDetailsByIdAndStatus(1L, EventStatus.PUBLISHED);
     }
 
     @Test
@@ -86,8 +86,8 @@ class EventCachingTest {
         Event event1 = sampleEvent(1L, "Event One", org);
         Event event2 = sampleEvent(2L, "Event Two", org);
 
-        when(eventRepository.findWithDetailsById(1L)).thenReturn(Optional.of(event1));
-        when(eventRepository.findWithDetailsById(2L)).thenReturn(Optional.of(event2));
+        when(eventRepository.findWithDetailsByIdAndStatus(1L, EventStatus.PUBLISHED)).thenReturn(Optional.of(event1));
+        when(eventRepository.findWithDetailsByIdAndStatus(2L, EventStatus.PUBLISHED)).thenReturn(Optional.of(event2));
         when(organizerService.getOrganizerForUser("org@neon.com")).thenReturn(org);
         when(eventRepository.findByIdAndOrganizerId(1L, 10L)).thenReturn(Optional.of(event1));
 
@@ -113,15 +113,17 @@ class EventCachingTest {
         eventService.findEventById(2L);
 
         assertThat(reloaded1.title()).isEqualTo("Event One Updated");
-        verify(eventRepository, times(2)).findWithDetailsById(1L);
-        verify(eventRepository, times(1)).findWithDetailsById(2L);
+        verify(eventRepository, times(2)).findWithDetailsByIdAndStatus(1L, EventStatus.PUBLISHED);
+        verify(eventRepository, times(1)).findWithDetailsByIdAndStatus(2L, EventStatus.PUBLISHED);
     }
 
     @Test
     void suspendOrganizer_evictsAllEntriesFromEventDetailsCache() {
         Organizer org = sampleOrganizer(10L, "Neon Festivals", OrganizerStatus.APPROVED);
-        when(eventRepository.findWithDetailsById(1L)).thenReturn(Optional.of(sampleEvent(1L, "Event 1", org)));
-        when(eventRepository.findWithDetailsById(2L)).thenReturn(Optional.of(sampleEvent(2L, "Event 2", org)));
+        when(eventRepository.findWithDetailsByIdAndStatus(1L, EventStatus.PUBLISHED))
+                .thenReturn(Optional.of(sampleEvent(1L, "Event 1", org)));
+        when(eventRepository.findWithDetailsByIdAndStatus(2L, EventStatus.PUBLISHED))
+                .thenReturn(Optional.of(sampleEvent(2L, "Event 2", org)));
         when(organizerRepository.findById(10L)).thenReturn(Optional.of(org));
         when(eventRepository.updatePublishedEventsStatusByOrganizerId(10L, EventStatus.DRAFT)).thenReturn(2);
 

@@ -1,5 +1,6 @@
 package com.eventpass.event;
 
+import com.eventpass.booking.BookingRepository;
 import com.eventpass.common.BusinessRuleException;
 import com.eventpass.common.CacheConfig;
 import com.eventpass.common.PageResponse;
@@ -16,9 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.eventpass.booking.BookingRepository;
 import java.time.Instant;
-
 
 @Slf4j
 @Service
@@ -74,7 +73,6 @@ public class OrganizerEventService {
     public void deleteDraftEvent(String userEmail, Long eventId) {
         Event event = getOwnedEvent(userEmail, eventId);
 
-        // BR8: Only DRAFT events can be deleted; published events must be cancelled
         if (event.getStatus() != EventStatus.DRAFT) {
             throw new BusinessRuleException("Only DRAFT events can be deleted; published events must be cancelled");
         }
@@ -89,7 +87,6 @@ public class OrganizerEventService {
     public EventDetailResponse publishEvent(String userEmail, Long eventId) {
         Event event = getOwnedEvent(userEmail, eventId);
 
-        // BR5: Organizer must be APPROVED to publish events
         if (event.getOrganizer().getStatus() != OrganizerStatus.APPROVED) {
             throw new BusinessRuleException("Organizer must be APPROVED before publishing events");
         }
@@ -106,24 +103,24 @@ public class OrganizerEventService {
     }
 
     @Audited(action = "CANCEL_EVENT")
-@CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, key = "#eventId")
-@Transactional
-public EventDetailResponse cancelEvent(String userEmail, Long eventId) {
-    Event event = getOwnedEvent(userEmail, eventId);
+    @CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, key = "#eventId")
+    @Transactional
+    public EventDetailResponse cancelEvent(String userEmail, Long eventId) {
+        Event event = getOwnedEvent(userEmail, eventId);
 
-    if (event.getStatus() == EventStatus.CANCELLED) {
-        throw new BusinessRuleException("Event with id " + eventId + " is already CANCELLED");
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new BusinessRuleException("Event with id " + eventId + " is already CANCELLED");
+        }
+
+        event.setStatus(EventStatus.CANCELLED);
+        Long organizerId = event.getOrganizer().getId();
+        EventDetailResponse response = EventMapper.toDetail(event);
+
+        int cancelledBookings = bookingRepository.cancelConfirmedBookingsByEventId(eventId, Instant.now());
+        log.info("Cancelled event id={} organizerId={} cancelledBookings={}",
+                eventId, organizerId, cancelledBookings);
+        return response;
     }
-
-    event.setStatus(EventStatus.CANCELLED);
-    Long organizerId = event.getOrganizer().getId();
-    EventDetailResponse response = EventMapper.toDetail(event);
-
-    int cancelledBookings = bookingRepository.cancelConfirmedBookingsByEventId(eventId, Instant.now());
-    log.info("Cancelled event id={} organizerId={} cancelledBookings={}",
-            eventId, organizerId, cancelledBookings);
-    return response;
-}
 
     @Audited(action = "ADD_TICKET_TIER")
     @CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, key = "#eventId")
@@ -157,6 +154,9 @@ public EventDetailResponse cancelEvent(String userEmail, Long eventId) {
             UpsertTicketTierRequest request
     ) {
         Event event = getOwnedEvent(userEmail, eventId);
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new BusinessRuleException("Cannot modify ticket tiers of a CANCELLED event");
+        }
         TicketTier tier = findOwnedTier(event, tierId);
 
         if (request.capacity() < tier.getSoldCount()) {
@@ -178,13 +178,15 @@ public EventDetailResponse cancelEvent(String userEmail, Long eventId) {
     @Transactional
     public void deleteTier(String userEmail, Long eventId, Long tierId) {
         Event event = getOwnedEvent(userEmail, eventId);
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new BusinessRuleException("Cannot remove ticket tiers from a CANCELLED event");
+        }
         TicketTier tier = findOwnedTier(event, tierId);
 
         if (tier.getSoldCount() > 0) {
             throw new BusinessRuleException("Cannot remove a ticket tier that already has sold tickets");
         }
 
-        // orphanRemoval = true on Event.ticketTiers deletes the row on commit
         event.getTicketTiers().remove(tier);
         log.info("Removed ticket tier id={} eventId={}", tierId, eventId);
     }

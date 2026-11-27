@@ -1,7 +1,7 @@
 package com.eventpass.organizer;
-import com.eventpass.common.CacheConfig;  
-import org.springframework.cache.annotation.CacheEvict;  
+
 import com.eventpass.common.BusinessRuleException;
+import com.eventpass.common.CacheConfig;
 import com.eventpass.common.PageResponse;
 import com.eventpass.common.ResourceNotFoundException;
 import com.eventpass.event.EventRepository;
@@ -9,6 +9,7 @@ import com.eventpass.event.EventStatus;
 import com.eventpass.logging.Audited;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,10 +29,6 @@ public class AdminOrganizerService {
                 OrganizerResponse::from);
     }
 
-    /**
-     * PENDING -> APPROVED or SUSPENDED -> APPROVED.
-     * Approved organizers may publish events.
-     */
     @Audited(action = "APPROVE_ORGANIZER")
     @Transactional
     public OrganizerResponse approve(Long organizerId) {
@@ -43,17 +40,9 @@ public class AdminOrganizerService {
 
         organizer.setStatus(OrganizerStatus.APPROVED);
         log.info("Approved organizer id={} name={}", organizer.getId(), organizer.getName());
-
-        // No save() needed: organizer is a managed entity, so dirty checking writes the change on commit.
         return OrganizerResponse.from(organizer);
     }
 
-    /**
-     * Suspending an organizer unpublishes ALL their published events in ONE transaction.
-     * If anything fails, both the organizer update and the events update are rolled back.
-     * 
-     * Evicts the eventDetails cache so unpublished events are not served from RAM.
-     */
     @Audited(action = "SUSPEND_ORGANIZER")
     @CacheEvict(cacheNames = CacheConfig.EVENT_DETAILS_CACHE, allEntries = true)
     @Transactional
@@ -64,17 +53,13 @@ public class AdminOrganizerService {
             throw new BusinessRuleException("Organizer with id " + organizerId + " is already SUSPENDED");
         }
 
-        // ① Change the managed entity BEFORE the bulk update (flushAutomatically writes it first).
+        // Update managed entity before the bulk UPDATE so flushAutomatically writes it before clearAutomatically detaches it
         organizer.setStatus(OrganizerStatus.SUSPENDED);
 
-        // ② Bulk UPDATE in one SQL statement; clearAutomatically detaches `organizer` afterwards.
         int unpublishedCount = eventRepository.updatePublishedEventsStatusByOrganizerId(
-                organizerId, EventStatus.DRAFT
-        );
+                organizerId, EventStatus.DRAFT);
 
         log.info("Suspended organizer id={} and unpublished {} events", organizerId, unpublishedCount);
-
-        // Reading fields from the detached entity is safe; they were loaded before the clear.
         return new SuspendOrganizerResponse(OrganizerResponse.from(organizer), unpublishedCount);
     }
 

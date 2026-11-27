@@ -1,12 +1,12 @@
 package com.eventpass.security;
+
+import com.eventpass.user.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,42 +14,49 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component 
-@RequiredArgsConstructor 
-public class JwtAuthenticationFilter extends OncePerRequestFilter{
+import java.io.IOException;
+import java.util.List;
 
-     private final JwtService jwtService;
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-     @Override 
-     protected void doFilterInternal(
-          HttpServletRequest request,
-          HttpServletResponse response,
-          FilterChain filterChain
-     ) throws ServletException, IOException {
-          String authHeader = request.getHeader("Authorization");
+    private final JwtService jwtService;
 
-          if(authHeader == null || !authHeader.startsWith("Bearer ")) {
-               filterChain.doFilter(request, response);
-               return;
-          }
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
 
-          String token = authHeader.substring(7);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-          try {
-               Claims claims = jwtService.parseClaims(token);
-               String email = claims.getSubject();
-               String role = claims.get("role", String.class);
+        String token = authHeader.substring(7);
 
-               var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-               var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
+        try {
+            Claims claims = jwtService.parseClaims(token);
+            String email = claims.getSubject();
+            String roleClaim = claims.get("role", String.class);
 
-               SecurityContextHolder.getContext().setAuthentication(authentication);
-          }
-           catch (JwtException ex) {
-               SecurityContextHolder.clearContext();
-           }
+            if (email == null || email.isBlank() || roleClaim == null || roleClaim.isBlank()) {
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-           filterChain.doFilter(request, response);
-     }
+            Role role = Role.valueOf(roleClaim);
+            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+            var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (JwtException | IllegalArgumentException ex) {
+            SecurityContextHolder.clearContext();
+        }
 
+        filterChain.doFilter(request, response);
+    }
 }

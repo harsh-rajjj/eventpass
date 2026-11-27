@@ -2,15 +2,23 @@ package com.eventpass.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.net.URI;
 
-@Component
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+    private final JsonMapper jsonMapper;
+
+    public RestAuthenticationEntryPoint(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
+    }
 
     @Override
     public void commence(
@@ -18,16 +26,21 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, "Authentication is required to access this resource");
+        problem.setTitle("Unauthorized");
+        setInstanceQuietly(problem, request.getRequestURI());
+
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-        response.getWriter().write("""
-                {
-                  "type": "about:blank",
-                  "title": "Unauthorized",
-                  "status": 401,
-                  "detail": "Authentication is required to access this resource",
-                  "instance": "%s"
-                }
-                """.formatted(request.getRequestURI()));
+        jsonMapper.writeValue(response.getOutputStream(), problem);
+    }
+
+    private void setInstanceQuietly(ProblemDetail problem, String uri) {
+        try {
+            problem.setInstance(URI.create(uri));
+        } catch (IllegalArgumentException ignored) {
+            // Skip invalid URI characters rather than failing error serialization
+        }
     }
 }

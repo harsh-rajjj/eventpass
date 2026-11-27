@@ -16,25 +16,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.RequiredArgsConstructor;
-
 @Tag(name = "Admin - Support Tickets", description = "Admin endpoints for listing and closing support tickets")
-@RestController 
+@RestController
 @RequestMapping("/api/v1/admin/support-tickets")
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class AdminSupportTicketController {
 
-     private final SupportTicketService supportTicketService;
+    private final SupportTicketService supportTicketService;
 
-     @GetMapping 
-     public ResponseEntity<PageResponse<SupportTicketResponse>> listTickets(@RequestParam(required = false)
-SupportTicketStatus status, @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-     return ResponseEntity.ok(supportTicketService.listTickets(status, pageable));
-}
+    @GetMapping
+    public ResponseEntity<PageResponse<SupportTicketResponse>> listTickets(
+            @RequestParam(required = false) SupportTicketStatus status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(supportTicketService.listTickets(status, pageable));
+    }
 
-@PatchMapping("/{ticketId}")
-public ResponseEntity<SupportTicketResponse> updateTicketStatus(@PathVariable Long ticketId, @Valid @RequestBody UpdateSupportTicketStatusRequest request) {
-     return ResponseEntity.ok(supportTicketService.updateTicketStatus(ticketId, request));
-}
-
+    @PatchMapping("/{ticketId}")
+    public ResponseEntity<SupportTicketResponse> updateTicketStatus(
+            @PathVariable Long ticketId,
+            @Valid @RequestBody UpdateSupportTicketStatusRequest request
+    ) {
+        return ResponseEntity.ok(supportTicketService.updateTicketStatus(ticketId, request));
+    }
 }

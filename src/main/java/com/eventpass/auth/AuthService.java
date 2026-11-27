@@ -1,5 +1,6 @@
 package com.eventpass.auth;
 
+import com.eventpass.common.BusinessRuleException;
 import com.eventpass.common.DuplicateEmailException;
 import com.eventpass.logging.Audited;
 import com.eventpass.organizer.Organizer;
@@ -10,7 +11,6 @@ import com.eventpass.user.User;
 import com.eventpass.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.password.CompromisedPasswordChecker;
@@ -20,7 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -40,7 +40,7 @@ public class AuthService {
         validateNewUser(email, request.password());
 
         User user = new User();
-        user.setFullName(request.fullName());
+        user.setFullName(request.fullName().trim());
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(Role.ATTENDEE);
@@ -51,22 +51,25 @@ public class AuthService {
     }
 
     @Audited(action = "REGISTER_ORGANIZER")
-    @Transactional // Saves both Organizer and User in ONE database transaction
+    @Transactional
     public UserResponse registerOrganizer(RegisterOrganizerRequest request) {
         String email = normalizeEmail(request.email());
+        String organizerName = request.organizerName().trim();
         validateNewUser(email, request.password());
 
-        // 1. Create the organization (status defaults to OrganizerStatus.PENDING)
+        if (organizerRepository.existsByNameIgnoreCase(organizerName)) {
+            throw new BusinessRuleException("Organizer name '" + organizerName + "' is already in use");
+        }
+
         Organizer organizer = new Organizer();
-        organizer.setName(request.organizerName());
+        organizer.setName(organizerName);
         organizer.setDescription(request.description());
         organizer.setWebsite(request.website());
         organizer.setContactEmail(normalizeEmail(request.contactEmail()));
         Organizer savedOrganizer = organizerRepository.save(organizer);
 
-        // 2. Create the organizer user linked to that organization
         User user = new User();
-        user.setFullName(request.fullName());
+        user.setFullName(request.fullName().trim());
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(Role.ORGANIZER);
@@ -80,13 +83,10 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
 
-        // 1. Triggers CustomUserDetailsService + BCrypt passwordEncoder.matches()
-        //    Throws BadCredentialsException (401) automatically if email or password is wrong!
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, request.password())
         );
 
-        // 2. Credentials are valid -> fetch User and generate a signed JWT
         User user = userRepository.findByEmail(email).orElseThrow();
         String token = jwtService.generateToken(user.getEmail(), user.getRole());
 
@@ -95,18 +95,22 @@ public class AuthService {
     }
 
     private void validateNewUser(String email, String rawPassword) {
-        // Reject duplicate email with 409 Conflict
         if (userRepository.existsByEmail(email)) {
             log.warn("Registration rejected: duplicate email={}", email);
             throw new DuplicateEmailException(email);
         }
 
-        // Reject breached passwords with 400 Bad Request
-        CompromisedPasswordDecision decision = compromisedPasswordChecker.check(rawPassword);
-        if (decision.isCompromised()) {
-            log.warn("Registration rejected: compromised password for email={}", email);
-            throw new CompromisedPasswordException(
-                    "The provided password has appeared in a data breach and cannot be used");
+        try {
+            CompromisedPasswordDecision decision = compromisedPasswordChecker.check(rawPassword);
+            if (decision.isCompromised()) {
+                log.warn("Registration rejected: compromised password for email={}", email);
+                throw new CompromisedPasswordException(
+                        "The provided password has appeared in a data breach and cannot be used");
+            }
+        } catch (CompromisedPasswordException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.warn("Compromised password check unavailable; skipping external lookup: {}", ex.getMessage());
         }
     }
 

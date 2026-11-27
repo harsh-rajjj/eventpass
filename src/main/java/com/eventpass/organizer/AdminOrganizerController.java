@@ -1,4 +1,3 @@
-
 package com.eventpass.organizer;
 
 import com.eventpass.common.PageResponse;
@@ -16,29 +15,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Admin - Organizers", description = "Admin endpoints for approving and suspending organizers")
-@RestController 
+@RestController
 @RequestMapping("/api/v1/admin/organizers")
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class AdminOrganizerController {
 
-     private final AdminOrganizerService adminOrganizerService;
+    private final AdminOrganizerService adminOrganizerService;
 
-     /**
-      * Oldest first (id ASC) so admins word through the PENDING queue in arrival order.
-      */
+    /**
+     * Oldest first (id ASC) so admins work through the PENDING queue in arrival order.
+     */
+    @GetMapping
+    public ResponseEntity<PageResponse<OrganizerResponse>> listOrganizers(
+            @RequestParam(required = false) OrganizerStatus status,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(adminOrganizerService.listOrganizers(status, pageable));
+    }
 
-     @GetMapping 
-     public ResponseEntity<PageResponse<OrganizerResponse>> listOrganizers(@RequestParam(required = false) OrganizerStatus status, @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-          return ResponseEntity.ok(adminOrganizerService.listOrganizers(status, pageable));
-     }
+    @PostMapping("/{organizerId}/approve")
+    public ResponseEntity<OrganizerResponse> approve(@PathVariable Long organizerId) {
+        return ResponseEntity.ok(adminOrganizerService.approve(organizerId));
+    }
 
-     @PostMapping("/{organizerId}/approve")
-     public ResponseEntity<OrganizerResponse> approve(@PathVariable Long organizerId) {
-          return ResponseEntity.ok(adminOrganizerService.approve(organizerId));
-     }
-
-     @PostMapping("/{organizerId}/suspend")
-     public ResponseEntity<SuspendOrganizerResponse> suspend(@PathVariable Long organizerId) {
-          return ResponseEntity.ok(adminOrganizerService.suspend(organizerId));
-     }
+    @PostMapping("/{organizerId}/suspend")
+    public ResponseEntity<SuspendOrganizerResponse> suspend(@PathVariable Long organizerId) {
+        return ResponseEntity.ok(adminOrganizerService.suspend(organizerId));
+    }
 }
